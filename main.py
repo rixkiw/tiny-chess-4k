@@ -37,3 +37,4 @@ exec(lzma.decompress(base64.b85decode(
 'O{!j&!!R?neTe$8W)Po+ZqL^|UIEPKP5nCDNTqTz&8o?$zt%L5&OfT}Y;}$8MzYnV9x~Pon9G{>L9yllQ?y&}?D2X(00F!dsYCz('
 '0!7VyvBYQl0ssI200dcD')))
 # Move loop: read a move, validate it, apply it, print the board, and pause until the next input arrives.
+# Search uses a fixed node budget so identical inputs always produce the same visited-node count.
