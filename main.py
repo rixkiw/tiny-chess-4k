@@ -1,157 +1,29 @@
-import json,os,urllib.request as R
-U=os.environ.get("MAKEFUN_ENV_URL","http://127.0.0.1:9")
-S=[i for i in range(21,99)if i%10 not in(0,9)]
-N=(-21,-19,-12,-8,8,12,19,21)
-BI=(-11,-9,9,11)
-R4=(-10,-1,1,10)
-V={"p":100,"n":320,"b":330,"r":500,"q":900,"k":0}
-O={"n":N,"b":BI,"r":R4,"q":BI+R4,"k":BI+R4}
-M=99999
-nodes=0
-budget=260000
-SC=0
-KL=[None]*80
-def ps(q,r,c):
- ce=7-abs(c-3.5)-abs(r-3.5)
- if q=="p":return(8*(6-r)if r<7 else 70)+(8 if c in(3,4)else 0)-(10 if c in(0,7)else 0)
- if q=="n":return 12*ce
- if q=="b":return 7*ce
- if q=="r":return 4*ce+(22 if r==1 else 0)
- if q=="q":return 3*ce
- return 24 if r==7 and c in(0,1,2,6,7)else -12*ce
-P={q:[ps(q,r,c)for r in range(8)for c in range(8)]for q in "pnbrqk"}
-def vl(p,i):
- q=p.lower()
- r=i//10-2
- if p.isupper():return V[q]+P[q][r*8+i%10-1]
- return-(V[q]+P[q][(7-r)*8+i%10-1])
-def parse(f):
- global SC
- b=["x"]*120
- for i in S:b[i]="."
- r=2;c=1
- for h in f.split()[0]:
-  if h=="/":r+=1;c=1
-  elif h.isdigit():c+=int(h)
-  else:b[r*10+c]=h;c+=1
- SC=sum(vl(b[i],i)for i in S if b[i]!=".")
- return b,f.split()[1]=="w"
-def gen(b,w,c=0):
- m=[]
- for i in S:
-  p=b[i]
-  if p=="."or p.isupper()!=w:continue
-  q=p.lower()
-  if q=="p":
-   d=-10 if w else 10
-   t=i+d
-   if b[t]==".":
-    if t<30 or t>88:m.append((i,t,"q"))
-    elif not c:
-     m.append((i,t,""))
-     if(i<40 or i>80)and b[i+2*d]==".":m.append((i,i+2*d,""))
-   for e in(d-1,d+1):
-    t=i+e;v=b[t]
-    if v not in("x",".")and v.isupper()!=w:m.append((i,t,"q"if t<30 or t>88 else""))
-  else:
-   for o in O[q]:
-    t=i+o
-    while b[t]!="x":
-     v=b[t]
-     if v==".":
-      if not c:m.append((i,t,""))
-     else:
-      if v.isupper()!=w:m.append((i,t,""))
-      break
-     if q=="n"or q=="k":break
-     t+=o
- return m
-def mv(b,m):
- global SC
- f,t,pr=m
- c=b[t];p=b[f]
- if c!=".":SC-=vl(c,t)
- SC-=vl(p,f)
- np=(pr.upper()if p.isupper()else pr)if pr else p
- b[t]=np
- b[f]="."
- SC+=vl(np,t)
- return c
-def un(b,m,c):
- global SC
- f,t,pr=m
- p=b[t]
- SC-=vl(p,t)
- p=("P"if p.isupper()else"p")if pr else p
- b[f]=p
- b[t]=c
- SC+=vl(p,f)
- if c!=".":SC+=vl(c,t)
-def qs(b,w,a,e,d):
- global nodes
- nodes+=1
- s=SC if w else-SC
- if s>=e or d>4:return s
- if s>a:a=s
- for m in gen(b,w,1):
-  if b[m[1]].lower()=="k":return M-d
-  c=mv(b,m)
-  v=-qs(b,not w,-e,-a,d+1)
-  un(b,m,c)
-  if v>=e:return v
-  if v>a:a=v
- return a
-def srch(b,w,dep,a,e,pl):
- global nodes
- nodes+=1
- if nodes>budget:raise StopIteration
- if dep<1:return qs(b,w,a,e,0)
- ms=gen(b,w)
- if not ms:return-pl-M
- ms.sort(key=lambda m:-V.get(b[m[1]].lower(),0)*9+V[b[m[0]].lower()]-(400 if m==KL[pl]else 0))
- i=0
- for m in ms:
-  if b[m[1]].lower()=="k":return M-pl
-  q=b[m[1]]=="."and not m[2]
-  c=mv(b,m)
-  if i>3 and dep>2 and q:
-   v=-srch(b,not w,dep-2,-e,-a,pl+1)
-   if v>a:v=-srch(b,not w,dep-1,-e,-a,pl+1)
-  else:v=-srch(b,not w,dep-1,-e,-a,pl+1)
-  un(b,m,c)
-  i+=1
-  if v>=e:
-   if q:KL[pl]=m
-   return v
-  if v>a:a=v
- return a
-def sq(s):return(10-int(s[1]))*10+"abcdefgh".index(s[0])+1
-def best(f,l):
- global nodes
- nodes=0
- b,w=parse(f)
- t=l[0]
- sc=[0]*len(l)
- for dep in range(1,12):
-  try:
-   bs=-M*2
-   u0=None
-   for i in sorted(range(len(l)),key=lambda j:-sc[j]):
-    u=l[i]
-    m=(sq(u[0:2]),sq(u[2:4]),u[4:5])
-    c=mv(b,m)
-    v=-srch(b,not w,dep-1,-M*2,M*2,1)
-    un(b,m,c)
-    sc[i]=v
-    if v>bs:bs,u0=v,u
-   t=u0
-  except StopIteration:break
- return t
-def post(p,d):
- return json.load(R.urlopen(R.Request(U+p,json.dumps(d).encode(),{"content-type":"application/json"})))
-g=post("/game",{})
-while g["status"]!="done":
- while g["status"]=="your_move":
-  nodes=0
-  g=post("/move",{"game":g["game"],"move":best(g["fen"],g["legal_moves"])})
- g=post("/game",{})
+# tiny-chess-01 entry: lzma-packed chess engine, Python 3.13 stdlib only.
+# alpha-beta with quiescence, incremental evaluation, killer moves, late-move reductions, fixed node budget.
+import base64,lzma
+exec(lzma.decompress(base64.b85decode(
+'{Wp48S^xk9=GL@E0stWa8~^|S5YJf5;1Bx-{9OPvn@VT6Qap3u7A1{kq%B%nSvVN<h6|E8eS1piol8R37^;7zv`LYF;a77E5*?nA'
+'HC)!kuQhcuxP|!CWKoGSE8h8Y(m^anGG;25Vbu}Yg}S95ZRZok0K_xEXa9eEKe_$Zs2&5Qr26;}*D$%6zdNS6b%$UOrDf%@gae4;'
+'Nsz{9pl`YkaM^2Vc#Q|)&s1veE{^_0e>E!oz66v+Ed)}Zu9g&LTibOH)Q~FDj+Zy)obL7}jhGmVzHaAbpjxITamX=!$Al_7ZT|c&'
+'S?h%YfK`EPp__#8BdQT$6!lsF<e%fOpiv-Peow?y<YA+hI;bUrkC8uSPnbY-!AVw3TMp7Ke>!8p$2Qn5%&B0A^Z9H5*U`o_o=J#y'
+'((!3HRw*kgV-hISJ!1stGrmS1H+(5)k`zLaz)}weYu9w4<7#cZTndP5^hD_P3z{w)*NtcK%{Z`m5t5}68+`|`xoI~#vW79J>9o&%'
+'G-Eg{RIX(-d(Xz=hSHO$X@9P{*@N@@lbEL}M)I{wkC}%8XKPD1vK;p*m2xeRrSxlerM1@TfA*!A6UWS%c2mBWMtnFkQUl#$)1q~j'
+'Sa*4>5I5OMcRZxsj|dXxqmXQdO0K!-B4Rr!gFIy^lO@F;dn_ndWGqA}OYdOv^jSpXrmf>Wl*ry8rEuIBIC~(t(iOp}*EmL)r(@NQ'
+'o%SA(u<xR!Xy3i1pep+D@-RcrS=jev6fjV7B&somq%p8M$_}sm0^#|>=fN_5#21G_OSh}0M%f$-Jg)bs(vK_5f1W#iZr3;9;kXLH'
+'QGhF)D`MiXNheU~P$MKX#g}J|Si=wjEcJ#>^&r7*Nj#}ujnKg>bzTC~IhvT(f$2<~UU@v#j57=(_FuM|U#@JR0fNjNLqwUVfQJ-q'
+'fH%rdc2J1FVrvaO^Qh0mKs(&WY{Nx)j6nh&fLtJ$Edl~durSmvPV1KonW!i|&G=laD!0N)hHgUSPaw@v)Vz+c9+WM=!4VwcDJfyB'
+'I%QkZ%EoUOXKY||^fOR8Y>qNlDDWfH*qs11GI(Cv)Agg0V^)^6g$Gac@p312V#glf3`T>Pc!wW>t+l5J1YqxzW~57+0DF~WGuJr('
+'DVkfG(%Yg4F0Cb4k{64La$(<Ls2f{3BKYU~#m%EQfG+XQ`>)Chwx)+Wh*n17|CBA)*F~Np(GPm;0cYchy#+%zx9EqFBxy^paj`g!'
+'hypyQtdGH#$+;^R1wr&F;?akr$56hZLcIzdEAHh&5$96!cYH5GebhOT-8-Z@vyCGxq^!op?4zW1NXpX%(cVYPJE$hn!y`eN&Mefi'
+'3TB~0i>hSHS0?@@j#7Y<-f8Er8a2-AX&2XS^M8U*f|dQ~GII8G+<wjgonYgQX{$i4ft3s)!vUZ-8WB9MQHPv}Ot>#y>(eN?M}@YV'
+'R`*yL3);N{Q+u5}y1)5mswi9(On&;OdGwnbMnHY6c#{4kmQUj|BnT&@jPYNtO~-MBr7@FB$Ga+qnZ6=fYS7p4>zdAEkvK<8VZiT4'
+'A2yItHb96?LtRQ+JAs?70$z=|*}tO~^FB8A&-aeGpO<hJiPitF0)h(%1};!Qnvk<K#KG=8!?9@+igiTALe<Dn)?(byL7UrQEg?^5'
+'w+B$~w~$*4>>VL|){zYQm+KD~IvloSXrCL!x`DOza9RWha9@E;pCY!Xb8&q6!I3clRznW@*|80*+B4a7Q87j<sATHoIGN}1{~s)U'
+'x-2G4%48pPfm&a)CG=bG&baVdMp_<p*FNQN-YZE}dHo#T%Z^%ST|%jA(sai6osUj#8KyseK*j#HePf4eu~jx{9Jy31up}>ZS=W5-'
+'l1x*%bpF<Ob~ht=-}DU&hOJ3!VJsHe-reY}A&0w!BOv~ee(sXVwKN?c@JRE62&T}iKsDvT1?&@G3BFIMcW#u<7`OVtdXwRecl_Gx'
+'(oa%E7V-c9xuV_1Z6BLQd0--u-H_gy2Xj*8zw^Xe<9*kjLvK)Pd<xd|2q(*u9l3yh_zOyOn#S47)gm^j-Y4~gF^syY(p@m|#7a5e'
+'(Bc3V<8R^7<qNus7|mCqTtZmAOs8)wdm?3X#sKKcGPmZWrkNGn=;LfP;$(OzEn`fG-HUq0_QpX=oXtebI*<r)IF|B^uu7KHg+2^g'
+'%`v1h>nAR{V6*mbglL)lV>6A<8^#wW^lZt3Dr7SCs9LgYwTSE2#t6CW!*)WsF*7cUH#wZpoPBs;zhDMZhvHkKeEuX}n!JmRYO;W1'
+'ncm$O>w;%}*iXm`1Y|8t|1X@Nzww@g!(S^DI`S+}T5mvoac_=ILY8q<guXqbRvJP45VB<Ea){CZRrQB8zwM+S00Ec|{2u@Sz_XfG'
+'vBYQl0ssI200dcD')))
+# end of entry
