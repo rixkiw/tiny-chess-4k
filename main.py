@@ -1,5 +1,5 @@
 # tiny-chess-01 entry: lzma-packed chess engine, Python 3.13 stdlib only.
-# alpha-beta with quiescence, incremental evaluation, killer moves, late-move reductions, fixed node budget.
+# search: alpha-beta, quiescence, incremental evaluation, killer moves, late-move reductions, fixed node budget.
 import base64,lzma
 exec(lzma.decompress(base64.b85decode(
 '{Wp48S^xk9=GL@E0stWa8~^|S5YJf5;1Bx-{9OPvn@VT6Qap3u7A1{kq%B%nSvVN<h6|E8eS1piol8R37^;7zv`LYF;a77E5*?nA'
