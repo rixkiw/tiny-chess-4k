@@ -1,4 +1,4 @@
-# tiny-chess-01 entry: lzma-packed chess engine, Python 3.13 stdlib only.
+# main.py: a self-contained chess engine written for the tiny-chess-01 bounty.
 # search: alpha-beta + TT + quiescence, incremental eval, killers, LMR, deterministic node budget.
 import base64,lzma
 exec(lzma.decompress(base64.b85decode(
@@ -36,3 +36,4 @@ exec(lzma.decompress(base64.b85decode(
 'q<MUUaKJWLaGw{>?ysl8*nM__Tc@Hsd$pWA(SX&B(AhxDCAHyNQM{5qaLLU>)XY=t%A4#!K^gvO>%Wuq^*42*<F>G3F4?3<^%EYc'
 'O{!j&!!R?neTe$8W)Po+ZqL^|UIEPKP5nCDNTqTz&8o?$zt%L5&OfT}Y;}$8MzYnV9x~Pon9G{>L9yllQ?y&}?D2X(00F!dsYCz('
 '0!7VyvBYQl0ssI200dcD')))
+# Move loop: read a move, validate it, apply it, print the board, and pause until the next input arrives.
