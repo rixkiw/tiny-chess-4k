@@ -1,4 +1,4 @@
-# main.py: a self-contained chess engine written for the tiny-chess-01 bounty.
+# Self-contained deterministic chess engine for the tiny-chess-01 bounty.
 # search: alpha-beta + TT + quiescence, incremental eval, killers, LMR, deterministic node budget.
 import base64,lzma
 exec(lzma.decompress(base64.b85decode(
